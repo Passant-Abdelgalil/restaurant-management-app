@@ -1,56 +1,51 @@
 <template>
+  <div class="error" v-if="error">{{ error }}</div>
   <div class="signup">
-    <img class="signup__img" src="../assets/restaurant.png" alt="sign up" />
+    <img class="signup__img" src="../assets/logo.png" alt="sign up" />
     <h1 class="signup__heading">Sign Up</h1>
     <form class="signup__form" @submit.prevent="signup">
-      <input
-        class="form__input"
+      <InputFieldComponent
         type="text"
-        name="username"
         placeholder="Username"
-        aria-label="your username"
-        v-model="username"
-        @input="validateUsername"
+        :required="true"
+        :rules="usernameRules"
+        errorMsg="username must be 8-20 long including letters and numbers"
+        @input="usernameChanged"
       />
-      <small class="error-msg" v-if="usernameErrMsg">{{
-        usernameErrMsg
-      }}</small>
-      <input
-        class="form__input"
+      <InputFieldComponent
         type="email"
-        name="email"
-        placeholder="Email"
-        aria-label="your email"
-        v-model="email"
-        @input="validateEmail"
+        placeholder="example@example.com"
+        :required="true"
+        :rules="emailRules"
+        errorMsg="please enter a valid email"
+        @input="emailChanged"
       />
-      <small class="error-msg" v-if="emailErrMsg">{{ emailErrMsg }}</small>
-
-      <input
-        class="form__input"
+      <InputFieldComponent
         type="password"
-        name="password"
         placeholder="Password"
-        aria-label="your password"
-        v-model="password"
-        @input="validatePassword"
+        :required="true"
+        :rules="passwordRules"
+        errorMsg="password must be at least 8 characters and shouldn't include your name"
+        ref="password"
+        @input="passwordChanged"
       />
-      <small class="error-msg" v-if="passwordErrMsg">{{
-        passwordErrMsg
-      }}</small>
 
       <input
         class="form__input signup--btn"
         type="submit"
         value="Sign Up"
         aria-label="Sign up"
-        :disabled="invalid"
+        :disabled="!valid"
       />
     </form>
+    <p>
+      <router-link to="/login">Login</router-link>
+    </p>
   </div>
 </template>
 
 <script>
+import InputFieldComponent from "@/components/InputField.vue";
 export default {
   name: "SignUp",
   data() {
@@ -58,80 +53,78 @@ export default {
       username: "",
       email: "",
       password: "",
-      emailErrMsg: null,
-      usernameErrMsg: null,
-      passwordErrMsg: null,
+      validEmail: null,
+      validUsername: null,
+      validPassword: null,
+      error: null,
     };
   },
+  watch: {
+    error(newErrorValue) {
+      if (newErrorValue) window.setTimeout(() => (this.error = null), 2000);
+    },
+  },
+  components: { InputFieldComponent },
   computed: {
-    invalid() {
-      return (
-        this.usernameErrMsg ||
-        this.emailErrMsg ||
-        this.passwordErrMsg ||
-        !this.username ||
-        !this.email ||
-        !this.password
-      );
+    emailName() {
+      return this.email.substring(0, this.email.indexOf("@"));
+    },
+    emailRules() {
+      return { regex: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/ };
+    },
+    passwordRules() {
+      return {
+        regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/,
+        notContaining: this.emailName,
+      };
+    },
+    usernameRules() {
+      return {
+        regex: /^(?=.{8,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$/,
+      };
+    },
+    valid() {
+      return this.validEmail && this.validUsername && this.validPassword;
     },
   },
   methods: {
-    validateEmail() {
-      let emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(.\w{2,3})+$/;
-      const valid = emailRegex.test(this.email);
-      this.emailErrMsg = valid ? null : "please enter a valid email";
-      return valid;
+    emailChanged(email, invalid) {
+      this.email = email;
+      this.validEmail = !invalid;
+      this.$refs.password.validate();
     },
-    validatePassword() {
-      let emailName = this.email.substring(0, this.email.indexOf("@"));
-      let passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
-      emailName = emailName === "" ? null : emailName;
-      const valid =
-        passwordRegex.test(this.password) && !this.password.includes(emailName);
-      this.passwordErrMsg = valid
-        ? null
-        : "password must be at least 8 characters and shouldn't include your name";
-
-      return valid;
+    passwordChanged(password, invalid) {
+      this.password = password;
+      this.validPassword = !invalid;
     },
-    validateUsername() {
-      let usernameRegex =
-        /^(?=.{8,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$/;
-      const valid = usernameRegex.test(this.username);
-      this.usernameErrMsg = valid
-        ? null
-        : "username must be 8-20 long including letters and numbers";
-
-      return valid;
-    },
-    validateForm() {
-      if (
-        this.validateUsername() &&
-        this.validatePassword() &&
-        this.validateEmail()
-      )
-        return (this.inValid = true);
-      this.inValid = false;
-      return false;
+    usernameChanged(username, invalid) {
+      this.username = username;
+      this.validUsername = !invalid;
     },
     async signup() {
-      if (!this.validateForm()) return;
-      let result = await fetch("http://localhost:3000/user", {
-        method: "POST",
-        body: JSON.stringify({
-          username: this.username,
-          email: this.email,
-          password: this.password,
-        }),
-        headers: {
-          "Content-type": "application/json; charset=UTF-8",
-        },
-      });
-      if (!result.ok) return;
-      let data = await result.json();
-      localStorage.setItem("user-email", data.email);
-      localStorage.setItem("user-username", data.username);
-      this.$router.push({ name: "home" });
+      if (!this.valid) return;
+      try {
+        let result = await fetch("http://localhost:3000/user", {
+          method: "POST",
+          body: JSON.stringify({
+            username: this.username,
+            email: this.email,
+            password: this.password,
+          }),
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        }).catch(
+          () => (this.error = "something went wrong, please try again later")
+        );
+        if (!result.ok) return;
+        let data = await result.json();
+        localStorage.setItem("user-email", data.email);
+        localStorage.setItem("user-username", data.username);
+        this.$router.push({ name: "home" });
+      } catch {
+        this.error = "something went wrong, please try again later";
+      }
     },
   },
 };
@@ -140,9 +133,6 @@ export default {
 <style lang="scss" scoped>
 $form-color: #a87942;
 $form-input-padding: 10px;
-$form-input-left-padding: 2 * $form-input-padding;
-$form-font-size: 15px;
-$form-input-border-radius: 6px;
 $form-height: 300px;
 $form-max-width: 400px;
 
@@ -163,18 +153,6 @@ $form-max-width: 400px;
   flex-direction: column;
   justify-content: space-between;
 }
-.form__input {
-  border-radius: $form-input-border-radius;
-  border: 1px solid #eee;
-  font-size: $form-font-size;
-  line-height: 2;
-  padding: $form-input-padding;
-  padding-left: $form-input-left-padding;
-  &:focus {
-    outline: none;
-    border-color: $form-color;
-  }
-}
 
 .signup--btn {
   border: none;
@@ -189,10 +167,10 @@ $form-max-width: 400px;
     cursor: not-allowed;
   }
 }
-.error-msg {
-  text-align: left;
-  color: red;
-  margin-top: -5px;
-  padding-left: 10px;
+.error {
+  padding: 15px;
+  background-color: rgba(255, 0, 0, 0.39);
+  color: white;
+  transition: 1s;
 }
 </style>

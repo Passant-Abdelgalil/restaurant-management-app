@@ -31,7 +31,7 @@
       />
 
       <input
-        class="form__input signup--btn"
+        class="form__input form--btn"
         type="submit"
         value="Sign Up"
         aria-label="Sign up"
@@ -152,25 +152,5 @@ $form-max-width: 400px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-}
-
-.signup--btn {
-  border: none;
-  background-color: $form-color;
-  color: white;
-  cursor: pointer;
-  font-weight: bold;
-  text-align: center;
-  padding-left: $form-input-padding;
-  &:disabled {
-    background-color: #dddddd;
-    cursor: not-allowed;
-  }
-}
-.error {
-  padding: 15px;
-  background-color: rgba(255, 0, 0, 0.39);
-  color: white;
-  transition: 1s;
 }
 </style>

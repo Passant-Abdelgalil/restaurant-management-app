@@ -1,16 +1,25 @@
 import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
 import SignupView from "../views/SignupView.vue";
+import LoginView from "../views/LoginView.vue";
 const routes = [
   {
     path: "/",
     name: "home",
     component: HomeView,
+    meta: { requiresAuth: true },
   },
   {
     path: "/signup",
     name: "signup",
     component: SignupView,
+    meta: { requiresAuth: false },
+  },
+  {
+    path: "/login",
+    name: "login",
+    component: LoginView,
+    meta: { requiresAuth: false },
   },
 ];
 
@@ -20,19 +29,13 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  console.log(from.name);
+  if (!to.meta.requiresAuth) return next();
+
   if (
-    to.name !== "signup" &&
-    (!localStorage.getItem("user-email") ||
-      !localStorage.getItem("user-username"))
+    !localStorage.getItem("user-email") ||
+    !localStorage.getItem("user-username")
   ) {
     next({ name: "signup" });
-  } else if (
-    to.name === "signup" &&
-    localStorage.getItem("user-email") &&
-    localStorage.getItem("user-username")
-  )
-    return next({ name: "home" });
-  else next();
+  } else next();
 });
 export default router;

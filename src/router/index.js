@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
 import SignupView from "../views/SignupView.vue";
 import LoginView from "../views/LoginView.vue";
+import AddRestaurant from "../views/AddRestaurant.vue";
+import UpdateRestaurant from "../views/UpdateRestaurant.vue";
 const routes = [
   {
     path: "/",
@@ -21,6 +23,18 @@ const routes = [
     component: LoginView,
     meta: { requiresAuth: false },
   },
+  {
+    path: "/add-restaurant",
+    name: "add",
+    component: AddRestaurant,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/update-restaurant",
+    name: "update",
+    component: UpdateRestaurant,
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({
@@ -29,6 +43,7 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
+  console.log(to.name);
   if (!to.meta.requiresAuth) return next();
 
   if (
@@ -36,6 +51,8 @@ router.beforeEach(async (to, from, next) => {
     !localStorage.getItem("user-username")
   ) {
     next({ name: "signup" });
-  } else next();
+  } else if (to.name === "login" || to.name === "signup")
+    next({ name: "signup" });
+  else next();
 });
 export default router;

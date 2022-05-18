@@ -12,5 +12,25 @@
       "password": "6DavF2qxJm9Lktc",
       "id": 2
     }
+  ],
+  "restaurants": [
+    {
+      "id": 1,
+      "name": "Burger King",
+      "contact": 11111,
+      "address": "Noida sector 50"
+    },
+    {
+      "id": 2,
+      "name": "lorem ipsum",
+      "contact": 12158,
+      "address": "lorem ipsum 50"
+    },
+    {
+      "id": 3,
+      "name": "Magna laborum",
+      "contact": 12351,
+      "address": "Ullamco dolor do 24"
+    }
   ]
 }

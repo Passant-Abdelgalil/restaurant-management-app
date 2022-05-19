@@ -3,7 +3,7 @@
   <img class="login__img" src="../assets/logo.png" alt="restaurant" />
   <h1>Login</h1>
   <form class="login__form" @submit.prevent="login">
-    <InputFieldComponent
+    <input-field
       type="email"
       placeholder="you@example.com"
       :required="true"
@@ -11,11 +11,14 @@
       @input="emailChanged"
       errorMsg="please enter a valid email"
     />
-    <InputFieldComponent
+    <input-field
+      ref="password"
       type="password"
       placeholder="password"
       :required="true"
       @input="passwordChanged"
+      :rules="passwordRules"
+      errorMsg="password must not contain your name and contain at least 6 characters"
     />
     <input
       type="submit"
@@ -31,21 +34,34 @@
 </template>
 
 <script>
-import InputFieldComponent from "../components/InputField.vue";
+import InputField from "../components/InputField.vue";
 export default {
   name: "LoginView",
-  components: { InputFieldComponent },
+  components: { InputField },
   computed: {
+    emailName() {
+      return this.email.substring(0, this.email.indexOf("@"));
+    },
     emailRules() {
       return { regex: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/ };
+    },
+    passwordRules() {
+      return {
+        notContaining: this.emailName,
+        regex: /\w{6,}/,
+      };
+    },
+    valid() {
+      return this.validEmail && this.validPassword;
     },
   },
   data() {
     return {
-      password: null,
-      email: null,
-      error: null,
-      valid: null,
+      password: "",
+      email: "",
+      error: "",
+      validEmail: false,
+      validPassword: false,
     };
   },
   watch: {
@@ -54,27 +70,28 @@ export default {
     },
   },
   methods: {
-    async login() {
-      try {
-        const result = await fetch(
-          `http://localhost:3000/user?email=${this.email}&password=${this.password}`
-        ).catch(() => (this.error = "email or password isn't correct"));
-        const data = await result.json();
-        if (data.length === 0)
-          return (this.error = "email or password isn't correct");
-        localStorage.setItem("user-email", data[0].email);
-        localStorage.setItem("user-username", data[0].username);
-        this.$router.push({ name: "home" });
-      } catch {
-        this.error = "something went wrong, please try again later";
-      }
+    login() {
+      this.$store
+        .dispatch("login", {
+          email: this.email,
+          password: this.password,
+        })
+        .then((response) => {
+          if (response.status) this.$router.push({ name: "home" });
+          else this.error = response.error;
+        })
+        .catch(
+          () => (this.error = "something went wrong, please try again later")
+        );
     },
-    passwordChanged(password) {
+    passwordChanged(password, invalid) {
       this.password = password;
+      this.validPassword = !invalid;
     },
     emailChanged(email, invalid) {
       this.email = email;
-      this.valid = !invalid;
+      this.validEmail = !invalid;
+      if (this.password) this.$refs.password.refresh();
     },
   },
 };

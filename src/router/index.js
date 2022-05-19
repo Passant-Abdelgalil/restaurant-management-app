@@ -4,6 +4,8 @@ import SignupView from "../views/SignupView.vue";
 import LoginView from "../views/LoginView.vue";
 import AddRestaurant from "../views/AddRestaurant.vue";
 import UpdateRestaurant from "../views/UpdateRestaurant.vue";
+import PageNotFound from "../views/PageNotFound.vue";
+import state from "../store";
 const routes = [
   {
     path: "/",
@@ -35,6 +37,11 @@ const routes = [
     component: UpdateRestaurant,
     meta: { requiresAuth: true },
   },
+  {
+    path: "/:notFound(.*)*",
+    name: "404",
+    component: PageNotFound,
+  },
 ];
 
 const router = createRouter({
@@ -42,17 +49,15 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach(async (to, from, next) => {
-  console.log(to.name);
+router.beforeEach(async (to, _, next) => {
+  if (to.name === "signup" || to.name === "login") {
+    if (state.getters.isAuth) next({ name: "home" });
+    else next();
+    return;
+  }
   if (!to.meta.requiresAuth) return next();
-
-  if (
-    !localStorage.getItem("user-email") ||
-    !localStorage.getItem("user-username")
-  ) {
-    next({ name: "signup" });
-  } else if (to.name === "login" || to.name === "signup")
-    next({ name: "signup" });
-  else next();
+  if (!state.getters.isAuth) {
+    next({ name: "login" });
+  } else next();
 });
 export default router;

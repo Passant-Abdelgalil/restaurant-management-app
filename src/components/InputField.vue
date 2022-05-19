@@ -14,7 +14,7 @@
 <script>
 export default {
   name: "InputFieldComponent",
-  expose: ["validate"],
+  expose: ["refresh"],
   emits: ["input"],
   props: {
     type: String,
@@ -40,10 +40,13 @@ export default {
       if (this.rules.regex)
         this.invalid |= !this.rules.regex.test(this.inputValue);
 
-      if (this.rules.notContaining)
+      if (this.rules.notContaining && this.inputValue) {
         this.invalid |= this.inputValue.includes(this.rules.notContaining);
-
+      }
       this.$emit("input", this.inputValue, this.invalid);
+    },
+    refresh() {
+      this.inputValue = `${this.inputValue}`;
     },
   },
 };

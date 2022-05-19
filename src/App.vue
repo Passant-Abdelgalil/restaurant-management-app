@@ -8,6 +8,11 @@ import Header from "@/components/Header.vue";
 export default {
   name: "app",
   components: { Header },
+  mounted() {
+    if (this.$store.dispatch("autoLogin")) {
+      this.$router.push({ name: "home" });
+    }
+  },
 };
 </script>
 <style lang="scss">

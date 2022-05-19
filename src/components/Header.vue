@@ -1,10 +1,18 @@
 <template>
   <header>
     <nav class="header__links">
-      <router-link :to="{ name: 'home' }"> Home</router-link>
-      <router-link :to="{ name: 'add' }"> Add Restaurant</router-link>
-      <router-link :to="{ name: 'update' }"> Update Restaurant</router-link>
-      <li @click.prevent="logout"><a href="#">Logout</a></li>
+      <div class="control">
+        <router-link :to="{ name: 'home' }"> Home</router-link>
+        <router-link :to="{ name: 'add' }" v-if="isAuth">
+          Add Restaurant</router-link
+        >
+        <router-link :to="{ name: 'update' }" v-if="isAuth">
+          Update Restaurant</router-link
+        >
+      </div>
+      <li @click.prevent="logout" v-if="isAuth" class="logout">
+        <a href="#">Logout</a>
+      </li>
     </nav>
   </header>
 </template>
@@ -15,10 +23,16 @@ export default {
   data() {
     return {};
   },
+  computed: {
+    isAuth() {
+      return this.$store.getters.isAuth;
+    },
+  },
   methods: {
     logout() {
-      localStorage.removeItem("user-email");
-      localStorage.removeItem("user-username");
+      localStorage.removeItem("email");
+      localStorage.removeItem("username");
+      this.$store.dispatch("logout");
       this.$router.push({ name: "login" });
     },
   },
@@ -33,6 +47,7 @@ header {
   list-style: none;
   display: flex;
   align-items: flex-end;
+  justify-content: space-between;
   a {
     display: block;
     color: white;
@@ -45,6 +60,9 @@ header {
       background-color: white;
       color: #333;
     }
+  }
+  .control {
+    display: flex;
   }
 }
 </style>
